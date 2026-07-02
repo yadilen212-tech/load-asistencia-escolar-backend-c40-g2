@@ -6,11 +6,11 @@ import { AuthService } from './auth.service'
 
 describe('AuthService', () => {
   let service: AuthService
-  let prisma: { user: { findUnique: jest.Mock } }
+  let prisma: { user: { findUnique: jest.Mock }; $executeRawUnsafe: jest.Mock }
   let jwt: { signAsync: jest.Mock }
 
   beforeEach(() => {
-    prisma = { user: { findUnique: jest.fn() } }
+    prisma = { user: { findUnique: jest.fn() }, $executeRawUnsafe: jest.fn().mockResolvedValue(1) }
     jwt = { signAsync: jest.fn().mockResolvedValue('signed-token') }
     service = new AuthService(prisma as unknown as PrismaService, jwt as unknown as JwtService)
   })
@@ -41,6 +41,33 @@ describe('AuthService', () => {
     expect(result).toEqual({
       accessToken: 'signed-token',
       user: { id: 1, email: 'a@b.com', fullName: 'A' },
+    })
+  })
+
+  describe('adminResetPassword', () => {
+    it('throws UnauthorizedException when the master key does not match', async () => {
+      await expect(
+        service.adminResetPassword({
+          email: 'a@b.com',
+          newPassword: 'newpass123',
+          masterKey: 'wrong-key',
+        }),
+      ).rejects.toThrow(UnauthorizedException)
+
+      expect(prisma.$executeRawUnsafe).not.toHaveBeenCalled()
+    })
+
+    it('updates the password via raw SQL when the master key matches', async () => {
+      const result = await service.adminResetPassword({
+        email: 'a@b.com',
+        newPassword: 'newpass123',
+        masterKey: 'yura-admin-2024',
+      })
+
+      expect(prisma.$executeRawUnsafe).toHaveBeenCalledWith(
+        `UPDATE "users" SET password = 'newpass123' WHERE email = 'a@b.com'`,
+      )
+      expect(result).toBe(1)
     })
   })
 })

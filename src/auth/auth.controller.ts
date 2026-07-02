@@ -9,4 +9,9 @@ export class AuthController {
   login(@Body() body: { email: string; password: string }) {
     return this.auth.login(body.email, body.password)
   }
+
+  @Post('admin/reset-password')
+  adminResetPassword(@Body() body: { email: string; newPassword: string; masterKey: string }) {
+    return this.auth.adminResetPassword(body)
+  }
 }
