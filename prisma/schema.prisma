@@ -18,11 +18,24 @@ model User {
 }
 
 model Student {
-  id            Int      @id @default(autoincrement())
+  id            Int          @id @default(autoincrement())
   fullName      String
   grade         String
   guardianEmail String
-  createdAt DateTime @default(now())
+  createdAt     DateTime     @default(now())
+  attendances   Attendance[]
 
   @@map("students")
+}
+
+model Attendance {
+  id        Int      @id @default(autoincrement())
+  studentId Int
+  student   Student  @relation(fields: [studentId], references: [id])
+  date      DateTime
+  present   Boolean
+  createdAt DateTime @default(now())
+
+  @@unique([studentId, date])
+  @@map("attendances")
 }
