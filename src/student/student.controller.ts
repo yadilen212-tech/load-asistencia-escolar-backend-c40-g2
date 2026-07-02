@@ -14,4 +14,9 @@ export class StudentController {
   create(@Body() body: any) {
     return this.service.create(body)
   }
+
+  @Get('count')
+  getCount(){
+      return this.service.count()
+  }
 }
