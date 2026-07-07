@@ -26,3 +26,14 @@ model Student {
 
   @@map("students")
 }
+
+model Attendance {
+  id        Int      @id @default(autoincrement())
+  studentId Int
+  date      DateTime
+  present   Boolean
+  createdAt DateTime @default(now())
+
+  @@unique([studentId, date])
+  @@map("attendance")
+}
