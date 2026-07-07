@@ -9,6 +9,10 @@ export class StudentService {
     return this.prisma.student.findMany({ orderBy: { createdAt: 'desc' } })
   }
 
+  count() {
+    return this.prisma.student.count()
+  }
+
   create(data: any) {
     return this.prisma.student.create({ data })
   }
