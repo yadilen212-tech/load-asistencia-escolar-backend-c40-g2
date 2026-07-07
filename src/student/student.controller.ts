@@ -1,17 +1,22 @@
-import { Body, Controller, Get, Post } from '@nestjs/common'
-import { StudentService } from './student.service'
+import { Controller, Get, Post, Body } from '@nestjs/common';
+import { StudentService } from './student.service';
 
 @Controller('educacion-asistencia')
 export class StudentController {
-  constructor(private readonly service: StudentService) {}
+  constructor(private studentService: StudentService) {}
 
   @Get()
   findAll() {
-    return this.service.findAll()
+    return this.studentService.findAll();
+  }
+
+  @Get('count')
+  count() {
+    return this.studentService.count();
   }
 
   @Post()
-  create(@Body() body: any) {
-    return this.service.create(body)
+  create(@Body() data: { fullName: string; grade: string; guardianEmail: string }) {
+    return this.studentService.create(data);
   }
 }
