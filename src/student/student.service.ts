@@ -14,6 +14,7 @@ export class StudentService {
   }
 
   create(data: any) {
+    // comment
     return this.prisma.student.create({ data })
   }
 }
