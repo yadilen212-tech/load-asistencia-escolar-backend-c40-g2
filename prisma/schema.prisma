@@ -7,12 +7,26 @@ datasource db {
   url      = env("DATABASE_URL")
 }
 
+model Role {
+  id        Int      @id @default(autoincrement())
+  name      String   @unique
+  description String?
+  users     User[]
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@map("roles")
+}
+
 model User {
   id        Int      @id @default(autoincrement())
   email     String   @unique
   password  String
   fullName  String
+  roleId    Int?
+  role      Role?    @relation(fields: [roleId], references: [id])
   createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
 
   @@map("users")
 }
@@ -22,7 +36,8 @@ model Student {
   fullName      String
   grade         String
   guardianEmail String
-  createdAt DateTime @default(now())
+  createdAt     DateTime @default(now())
+  updatedAt     DateTime @updatedAt
 
   @@map("students")
 }
