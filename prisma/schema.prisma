@@ -36,8 +36,22 @@ model Student {
   fullName      String
   grade         String
   guardianEmail String
+  attendances   Attendance[]
   createdAt     DateTime @default(now())
   updatedAt     DateTime @updatedAt
 
   @@map("students")
+}
+
+model Attendance {
+  id        Int      @id @default(autoincrement())
+  studentId Int
+  student   Student  @relation(fields: [studentId], references: [id])
+  date      DateTime
+  present   Boolean
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@unique([studentId, date])
+  @@map("attendances")
 }
