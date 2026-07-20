@@ -6,12 +6,12 @@ export class StudentController {
   constructor(private readonly service: StudentService) {}
 
   @Get()
-  findAll() {
+  async findAll() {
     return this.service.findAll()
   }
 
   @Post()
-  create(@Body() body: any) {
+  async create(@Body() body: any) {
     return this.service.create(body)
   }
 }
