@@ -1,5 +1,6 @@
-import { Injectable } from '@nestjs/common'
+import { Injectable, BadRequestException } from '@nestjs/common'
 import { PrismaService } from '../prisma/prisma.service'
+import { CreateAttendanceDto, BulkAttendanceDto } from './dto/create-attendance.dto'
 
 @Injectable()
 export class StudentService {
@@ -41,13 +42,53 @@ export class StudentService {
     })
   }
 
-  async create(data: any) {
-    const records = Array.isArray(data) ? data : data.records ?? []
+  async create(data: CreateAttendanceDto) {
+    const records = data.records
+
+    if (!records || records.length === 0) {
+      throw new BadRequestException('Records cannot be empty')
+    }
 
     const date = new Date()
     date.setHours(0, 0, 0, 0)
 
-    const ops = records.map((r: any) => {
+    const ops = records.map((r) => {
+      return this.prisma.attendance.upsert({
+        where: { studentId_date: { studentId: r.studentId, date } },
+        create: {
+          studentId: r.studentId,
+          date,
+          present: !!r.present,
+        },
+        update: {
+          present: !!r.present,
+        },
+      })
+    })
+
+    return this.prisma.$transaction(ops)
+  }
+
+  async createBulk(data: BulkAttendanceDto) {
+    const records = data.records
+
+    if (!records || records.length === 0) {
+      throw new BadRequestException('Records cannot be empty')
+    }
+
+    let date: Date
+    try {
+      date = new Date(data.date)
+      if (isNaN(date.getTime())) {
+        throw new BadRequestException('Invalid date format')
+      }
+    } catch (error) {
+      throw new BadRequestException('Invalid date format: ' + (error instanceof Error ? error.message : 'Unknown error'))
+    }
+
+    date.setHours(0, 0, 0, 0)
+
+    const ops = records.map((r) => {
       return this.prisma.attendance.upsert({
         where: { studentId_date: { studentId: r.studentId, date } },
         create: {

@@ -12,6 +12,11 @@ interface LoginResponse {
   }
 }
 
+interface JwtPayload {
+  sub: number
+  email: string
+}
+
 @Injectable()
 export class AuthService {
   constructor(
@@ -20,32 +25,39 @@ export class AuthService {
   ) {}
 
   async login(email: string, password: string): Promise<LoginResponse> {
-    // Validate input
     if (!email || !password) {
       throw new BadRequestException('Email and password are required')
     }
 
-    // Find user by email
-    const user = await this.prisma.user.findUnique({ where: { email } })
+    if (typeof email !== 'string' || typeof password !== 'string') {
+      throw new BadRequestException('Email and password must be strings')
+    }
 
-    // Validate user exists and password is correct
+    const trimmedEmail = email.trim().toLowerCase()
+    const trimmedPassword = password.trim()
+
+    if (!trimmedEmail.includes('@')) {
+      throw new BadRequestException('Invalid email format')
+    }
+
+    if (trimmedPassword.length < 6) {
+      throw new BadRequestException('Password must be at least 6 characters')
+    }
+
+    const user = await this.prisma.user.findUnique({ where: { email: trimmedEmail } })
+
     if (!user) {
       throw new UnauthorizedException('Invalid credentials')
     }
 
-    // Compare passwords using bcrypt
-    const isPasswordValid = await bcrypt.compare(password, user.password)
+    const isPasswordValid = await bcrypt.compare(trimmedPassword, user.password)
     if (!isPasswordValid) {
       throw new UnauthorizedException('Invalid credentials')
     }
 
-    // Generate JWT token
-    const accessToken = this.jwt.sign(
-      { sub: user.id, email },
-      { expiresIn: '1d' },
-    )
+    const payload: JwtPayload = { sub: user.id, email: user.email }
+    const accessToken = this.jwt.sign(payload, { expiresIn: '1d' })
 
-    // Return token and user info (exclude password)
     return {
       accessToken,
       user: {
